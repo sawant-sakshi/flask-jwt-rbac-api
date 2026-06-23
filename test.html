@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flask API Tester</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+    button { padding: 8px 16px; margin: 4px; cursor: pointer; }
+    pre { background: #f0f0f0; padding: 12px; border-radius: 6px; white-space: pre-wrap; }
+    input { padding: 6px; margin: 4px 0; width: 250px; }
+  </style>
+</head>
+<body>
+  <h2>Flask API Tester</h2>
+
+  <h3>Step 1: Login</h3>
+  <input id="email" value="admin@example.com" placeholder="email"><br>
+  <input id="password" value="admin123" placeholder="password"><br>
+  <button onclick="login()">Login</button>
+  <p id="tokenDisplay"></p>
+
+  <h3>Step 2: Test Endpoints</h3>
+  <button onclick="getProducts()">GET /products/</button>
+  <button onclick="getUsers()">GET /users/</button>
+  <button onclick="getMe()">GET /auth/me</button>
+
+  <h3>Response:</h3>
+  <pre id="output">Nothing yet...</pre>
+
+  <script>
+    let token = "";
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+        if (data.access_token) {
+          token = data.access_token;
+          document.getElementById("tokenDisplay").textContent = "Logged in! Token saved.";
+        }
+      } catch (e) {
+        document.getElementById("output").textContent = "Error: " + e.message;
+      }
+    }
+
+    async function getProducts() {
+      await callApi("/products/", "GET");
+    }
+
+    async function getUsers() {
+      await callApi("/users/", "GET");
+    }
+
+    async function getMe() {
+      await callApi("/auth/me", "GET");
+    }
+
+    async function callApi(path, method) {
+      try {
+        const res = await fetch("http://localhost:5000/api" + path, {
+          method,
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        document.getElementById("output").textContent =
+          "Status: " + res.status + "\n\n" + JSON.stringify(data, null, 2);
+      } catch (e) {
+        document.getElementById("output").textContent = "Error: " + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
